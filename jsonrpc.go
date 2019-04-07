@@ -112,6 +112,10 @@ type RPCClient interface {
 	// - the id's must be mapped against the id's you provided
 	// - RPCPersponses is enriched with helper functions e.g.: responses.HasError() returns  true if one of the responses holds an RPCError
 	CallBatchRaw(requests RPCRequests) (RPCResponses, error)
+
+	SetCustomHeader(string, string)
+
+	UnsetCustomHeader(string)
 }
 
 // RPCRequest represents a JSON-RPC request object.
