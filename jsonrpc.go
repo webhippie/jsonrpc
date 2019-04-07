@@ -182,10 +182,11 @@ func NewRequest(method string, params ...interface{}) *RPCRequest {
 //
 // See: http://www.jsonrpc.org/specification#response_object
 type RPCResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	Result  interface{} `json:"result,omitempty"`
-	Error   *RPCError   `json:"error,omitempty"`
-	ID      int         `json:"id"`
+	JSONRPC      string         `json:"jsonrpc"`
+	Result       interface{}    `json:"result,omitempty"`
+	Error        *RPCError      `json:"error,omitempty"`
+	ID           int            `json:"id"`
+	HTTPResponse *http.Response `json:"-"`
 }
 
 // RPCError represents a JSON-RPC error object if an RPC error occurred.
@@ -327,7 +328,6 @@ func (client *rpcClient) Call(method string, params ...interface{}) (*RPCRespons
 }
 
 func (client *rpcClient) CallRaw(request *RPCRequest) (*RPCResponse, error) {
-
 	return client.doCall(request)
 }
 
@@ -363,6 +363,17 @@ func (client *rpcClient) CallBatchRaw(requests RPCRequests) (RPCResponses, error
 	}
 
 	return client.doBatchCall(requests)
+}
+
+// SetCustomHeader is used to set a custom header for each rpc request.
+// You could for example set the Authorization Bearer here.
+func (client *rpcClient) SetCustomHeader(key string, value string) {
+	client.customHeaders[key] = value
+}
+
+// UnsetCustomHeader is used to removes a custom header that was added before.
+func (client *rpcClient) UnsetCustomHeader(key string) {
+	delete(client.customHeaders, key)
 }
 
 func (client *rpcClient) newRequest(req interface{}) (*http.Request, error) {
@@ -430,6 +441,7 @@ func (client *rpcClient) doCall(RPCRequest *RPCRequest) (*RPCResponse, error) {
 		return nil, fmt.Errorf("rpc call %v() on %v status code: %v. rpc response missing", RPCRequest.Method, httpRequest.URL.String(), httpResponse.StatusCode)
 	}
 
+	rpcResponse.HTTPResponse = httpResponse
 	return rpcResponse, nil
 }
 
